@@ -50,9 +50,6 @@ class Node:
 
 # TODO: add local steering to edge cost calculation
 
-def calc_dist(x1, x2):
-    return np.linalg.norm(x1 - x2)
-
 class Edge:
     def __init__(self, parent_index, child_index, index=-1):
         self._index = index
@@ -69,7 +66,7 @@ class Edge:
     def get_weight(self):
         return self._weight
 
-    def set_weight(self, _weight):
+    def set_weight(self, weight):
         self._weight = weight
 
     def get_parent_node_index(self):
@@ -88,7 +85,9 @@ class Edge:
         return "E{i} between V{p} and V{c} w={w}".format(i=self._index, p=self._parent_index, c=self._child_index, w=self._weight)
 
 
-# TODO: should the nodes and edges with a graph be a dictionary? would that be faster 
+def calc_distance(x1, x2):
+    return np.linalg.norm(x1 - x2)
+
 
 class Graph:
     def __init__(self):
@@ -116,6 +115,11 @@ class Graph:
         if isinstance(edge, Edge):
             # TODO:
             edge.set_index(self._current_edge_index)
+            X1 = self._nodes[edge.get_parent_node_index()].get_position()
+            X2 = self._nodes[edge.get_child_node_index()].get_position()
+            distance = calc_distance(X1, X2)
+            # print("Distance between ", X1, " and ", X2, ": ", distance)
+            edge.set_weight(distance)
             self._edges[self._current_edge_index] = edge
             self._current_edge_index = self._current_edge_index + 1
         else:
@@ -136,7 +140,26 @@ class Graph:
             plt.plot([X_start[0], X_end[0]], [X_start[1], X_end[1]], color='b', linewidth=1.0)
         plt.grid()
         plt.show()
-        
+
+
+class RRTStarGraph(Graph):
+
+    def nearest_neighbor(self, v):
+        nearest = self._nodes[0]
+        print(nearest)
+        min_distance = calc_distance(v, nearest.get_position())
+        print("Initial distance: ", min_distance)
+        for node in self._nodes.values():
+            distance = calc_distance(v, node.get_position())
+            print(distance)
+            if distance < min_distance:
+                min_distance = distance
+                nearest = node
+        print("Final distance: ", min_distance)
+        return nearest
+
+
+
 
 ################### TESTING #########################################
 
@@ -147,7 +170,8 @@ origin.set_index(0)
 origin.set_path_cost(42.0)
 print(origin)
 
-G = Graph()
+# G = Graph()
+G = RRTStarGraph()
 
 # [x_min, x_max, y_min, y_max]
 grid_limits = np.array([-10.0, 10.0, -10.0, 10.0])
@@ -178,3 +202,12 @@ for i in range(n_edges):
 #     print(E[i])
 
 G.plot_graph()
+
+v = np.array([0.0, 0.0])
+
+nearest = G.nearest_neighbor(v)
+
+print("Closest to the origin: ")
+print(nearest)
+plt.plot(nearest.get_position(), color='g', markersize=14)
+plt.show()
