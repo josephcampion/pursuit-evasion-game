@@ -73,20 +73,19 @@ class Edge:
         self._weight = weight
 
     def get_parent_node_index(self):
-        return self._parent_node.get_index()
+        return self._parent_index
 
     def set_parent_node_index(self, parent_index):
         self._parent_index = parent_index
     
     def get_child_node_index(self):
-        return self._child_node.get_index()    
+        return self._child_index    
 
     def set_child_node_index(self, child_index):
         self._child_index = child_index
 
     def __repr__(self):
-        return "E{i} between V{p} and V{c} w={w}".format(i=self._index, p=self._parent_node.get_index(),
-        c=self._child_node.get_index(), w=self._weight)
+        return "E{i} between V{p} and V{c} w={w}".format(i=self._index, p=self._parent_index, c=self._child_index, w=self._weight)
 
 
 # TODO: should the nodes and edges with a graph be a dictionary? would that be faster 
@@ -117,20 +116,26 @@ class Graph:
         if isinstance(edge, Edge):
             # TODO:
             edge.set_index(self._current_edge_index)
-
+            self._edges[self._current_edge_index] = edge
+            self._current_edge_index = self._current_edge_index + 1
         else:
             print("Argument must be of type Edge.")
-        
-
 
     def plot_graph(self):
-        for node in self._nodes:
+        for node in self._nodes.values():
+            # print(node)
             X = node.get_position()
             plt.plot(X[0], X[1], marker='o', color='r')
-        for edge in self._edges:
-            edge_start_index = edge.get_parent_node_index()
-
-            # x_start = 
+        for edge in self._edges.values():
+            # print(edge)
+            start_node = self._nodes[edge.get_parent_node_index()]
+            X_start = start_node.get_position()
+            # print("x: ", X_start)
+            end_node = self._nodes[edge.get_child_node_index()]
+            X_end = end_node.get_position()
+            plt.plot([X_start[0], X_end[0]], [X_start[1], X_end[1]], color='b', linewidth=1.0)
+        plt.grid()
+        plt.show()
         
 
 ################### TESTING #########################################
@@ -147,21 +152,29 @@ G = Graph()
 # [x_min, x_max, y_min, y_max]
 grid_limits = np.array([-10.0, 10.0, -10.0, 10.0])
 
-for i in range(10):
+n_nodes = 50
+n_edges = 100
+
+for i in range(n_nodes):
     x = (grid_limits[1] - grid_limits[0])*random.random() + grid_limits[0]
     y = (grid_limits[3] - grid_limits[2])*random.random() + grid_limits[2]
     node = Node(np.array([x, y]))
+    print(node)
     G.add_node(node)
 
-for i in range(25):
-    i1 = random.randint(0,9)
-    i2 = random.randint(0,9)
+for i in range(n_edges):
+    i1 = random.randint(0,n_nodes-1)
+    i2 = random.randint(0,n_nodes-1)
     edge = Edge(i1, i2)
+    G.add_edge(edge)
 
-    # print(ri)
 
+# N = G.get_nodes()
+# for i in range(len(N)):
+#     print(N[i])
 
-N = G.get_nodes()
-for i in range(len(N)):
-    print(N[i])
+# E = G.get_edges()
+# for i in range(len(E)):
+#     print(E[i])
 
+G.plot_graph()
